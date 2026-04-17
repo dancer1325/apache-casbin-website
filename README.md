@@ -1,12 +1,31 @@
-# [Apache Casbin website](https://casbin.apache.org/) [![Build and Deploy](https://github.com/apache/casbin-website/actions/workflows/master.yml/badge.svg)](https://github.com/apache/casbin-website/actions/workflows/master.yml)
+# [Apache Casbin website](https://casbin.apache.org/)
 
-Source for the official [**Apache Casbin**](https://casbin.apache.org/) documentation site. Casbin is [under incubation](https://incubator.apache.org/projects/casbin.html) at the [Apache Software Foundation](https://www.apache.org/) (ASF). The site is built with [Docusaurus](https://docusaurus.io/) **v3**.
+* goal
+  * Apache Casbin's documentation site's source
+    * -- based on -- [Docusaurus](https://docusaurus.io/) v3
 
-- **Live site:** [casbin.apache.org](https://casbin.apache.org/)
-- **Source repository:** [github.com/apache/casbin-website](https://github.com/apache/casbin-website)
+* Apache Casbin
+  * == [Apache Software Foundation (ASF)](https://www.apache.org/)'s [incubation](https://incubator.apache.org/projects/casbin.html) project
+  * == ⭐️access control library⭐️ /
+    * open-source
+    * powerful
+    * efficient
+    * support
+      * 👀MULTIPLE authorization models👀
+    * uses |
+      * applications
+      * AI gateway
+      * MCP
+      * clouds
+      * web apps
+
+## documentation
+* [here](src/pages/index.md)
+* [blog](blog)
 
 ## Build and deploy
 
+TODO: 
 On push to `master` or manual dispatch, the [Build and Deploy](https://github.com/apache/casbin-website/actions/workflows/master.yml) workflow:
 
 1. Installs dependencies and, for non–pull-request runs, runs Crowdin sync (`yarn crowdin:sync`; requires the `CROWDIN_PERSONAL_TOKEN` repository secret).
@@ -137,16 +156,3 @@ Keep `{repoLink}`, `{issueLink}`, etc. as-is; see [translate props](https://docu
 
 Do not translate metadata lines like `authors: [casbin]`.
 
-### Website development
-
-- [Creating Pages](https://docusaurus.io/docs/creating-pages)
-- [Styling and Layout](https://docusaurus.io/docs/styling-layout)
-- [Swizzling](https://docusaurus.io/docs/swizzling)
-
-## Apache and trademarks
-
-Apache Casbin is an effort undergoing incubation at the ASF. Apache®, the Apache feather logo, and related marks are trademarks of The Apache Software Foundation. See the [incubator status page](https://incubator.apache.org/projects/casbin.html) and the [ASF trademark policy](https://www.apache.org/foundation/marks/).
-
-## License
-
-[Apache License 2.0](./LICENSE).
