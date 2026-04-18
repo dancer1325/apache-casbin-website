@@ -20,99 +20,39 @@ authors: [nodece]
 
 * == parameters / passed -- to -- `e.Enforce(...)`
 
-* _Example:_ 
-    ```ini
-    [request_definition]
-    r = sub, obj, act
-    
-    # if there is NO resource/object
-    r = sub, act
-    
-    # if there are MULTIPLE subjects involved
-    r = sub, sub2, obj, act 
-    
-    # sub   == subject
-    # obj   == object
-    # act   == action  
-    ```
-
 ## `[policy_definition]`
 
-* == policy rules
+
+* | policy rules
   * 1 policy rule / EACH policy file's line
+  * ' first token
+    * == policy type / 
+      * MUST match -- with a -- policy definition
+  * ' ALL elements are treated -- as -- strings
+    * [here](https://github.com/casbin/casbin/issues/113)
 
-* _Example:_
-    ```ini
-    [policy_definition]
-    p = sub, obj, act
-    p2 = sub, act
-    ```
-  * policy file
+## `[policy_effect]`
 
-    ```csv
-    # FIRST policy rule
-    p, alice, data1, read
-    # == (alice, data1, read) -> (p.sub, p.obj, p.act)
-    
-    # SECOND policy rule
-    p2, bob, write-all-objects
-    # == (bob, write-all-objects) -> (p2.sub, p2.act)
-    ```
+* if MULTIPLE policies match (e.g. one allows, another denies) -> how to combine results 
 
-TODO:
+* ALLOWED built-in policy effects
+  * | CURRENT implementations,
+    * ❌CUSTOM effect expressions, are NOT supported❌ 
 
- The first token is the policy type (`p`, `p2`, etc.) and must match a policy definition
-
-
-
-:::tip
-Policy rule elements are always treated as strings. See [casbin/casbin#113](https://github.com/casbin/casbin/issues/113) for discussion.
-:::
-
-## Policy Effect
-
-The `[policy_effect]` section defines how to combine results when multiple policies match (e.g. one allows, another denies).
-
-```ini
-[policy_effect]
-e = some(where (p.eft == allow))
-```
-
-This gives **allow-override**: if any matched policy has effect `allow`, the result is allow. The `p.eft` field is the policy effect (`allow` or `deny`). It is optional and defaults to `allow` when omitted.
-
-Here's an alternative policy effect:
-
-```ini
-[policy_effect]
-e = !some(where (p.eft == deny))
-```
-
-This implements **deny-override**: the result is allow only when no matched policy has effect `deny`. You can combine expressions with logical operators:
-
-```ini
-[policy_effect]
-e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-```
-
-That expression requires at least one `allow` and no `deny`. Casbin supports both allow and deny; when both match, deny wins.
-
-:::note
-The policy effect must be one of the built-in effects below. Custom effect expressions are not supported in the current implementation.
-:::
-
-Available built-in policy effects:
-
-| Policy Effect                                                | Meaning               | Example                                             |
-|--------------------------------------------------------------|-----------------------|-----------------------------------------------------|
-| some(where (p.eft == allow))                                 | allow-override        | [ACL, RBAC, etc.](/docs/supported-models#examples)  |
-| !some(where (p.eft == deny))                                 | deny-override         | [Deny-override](/docs/supported-models#examples)    |
-| some(where (p.eft == allow)) && !some(where (p.eft == deny)) | allow-and-deny        | [Allow-and-deny](/docs/supported-models#examples)   |
-| priority(p.eft) &#124;&#124; deny                            | priority              | [Priority](/docs/supported-models#examples)         |
-| subjectPriority(p.eft)                                       | priority based on role| [Subject-Priority](/docs/supported-models#examples) |
+| Policy Effect                                                  | Meaning                                                                                                                      | Example                                           |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `some(where (p.eft == allow))`                                 | allow-override <br/> &ensp;&ensp; if a matched policy has effect `allow` -> the result is allow                              | [ACL, RBAC, etc.](SupportedModels.md)    |
+| `!some(where (p.eft == deny))`                                 | deny-override <br/> &ensp;&ensp; if NO matched policy has effect `deny` -> the result is allow                               | [Deny-override](SupportedModels)  |
+| `some(where (p.eft == allow)) && !some(where (p.eft == deny))` | allow-and-deny <br/> &ensp;&ensp; requirements: >=1 `allow`& NO `deny` <br/> &ensp;&ensp;  if BOTH match -> `deny` overrides | [Allow-and-deny](SupportedModels) |
+| `priority(p.eft) &#124;&#124; deny`                            | priority                                                                                                                     | [Priority](SupportedModels.md)                    |
+| `subjectPriority(p.eft)`                                       | priority -- based on -- role                                                                                                 | [Subject-Priority](SupportedModels.md)            |
 
 ## Constraint Definition
 
-The optional `[constraint_definition]` section defines invariants for RBAC (e.g. separation of duties). Constraints are checked when role assignments change. You must have `[role_definition]` to use constraints.
+The optional `[constraint_definition]` section defines invariants for RBAC (e.g
+* separation of duties)
+* Constraints are checked when role assignments change
+* You must have `[role_definition]` to use constraints.
 
 ```ini
 [constraint_definition]
@@ -124,25 +64,29 @@ c4 = rolePre("db_admin", "security_trained")
 
 ### Constraint Types
 
-**Separation of Duties (sod)** — A user cannot hold both roles. If Alice has `finance_requester`, she cannot be assigned `finance_approver`.
+**Separation of Duties (sod)** — A user cannot hold both roles
+* If Alice has `finance_requester`, she cannot be assigned `finance_approver`.
 
 ```ini
 c = sod("finance_requester", "finance_approver")
 ```
 
-**Separation of Duties Max (sodMax)** — Limits how many roles from a set a user can have. With `sodMax(..., 1)` for payroll roles, a user can have at most one of view, edit, or approve.
+**Separation of Duties Max (sodMax)** — Limits how many roles from a set a user can have
+* With `sodMax(..., 1)` for payroll roles, a user can have at most one of view, edit, or approve.
 
 ```ini
 c2 = sodMax(["payroll_view", "payroll_edit", "payroll_approve"], 1)
 ```
 
-**Role Cardinality (roleMax)** — Caps how many users can have a role. For example, at most two users can have `superadmin`.
+**Role Cardinality (roleMax)** — Caps how many users can have a role
+* For example, at most two users can have `superadmin`.
 
 ```ini
 c3 = roleMax("superadmin", 2)
 ```
 
-**Prerequisite Role (rolePre)** — One role is required before another. For example, a user must have `security_trained` before being assigned `db_admin`.
+**Prerequisite Role (rolePre)** — One role is required before another
+* For example, a user must have `security_trained` before being assigned `db_admin`.
 
 ```ini
 c4 = rolePre("db_admin", "security_trained")
@@ -150,18 +94,15 @@ c4 = rolePre("db_admin", "security_trained")
 
 ### How Constraints Work
 
-Constraints are enforced when grouping policies change (e.g. `AddGroupingPolicy()`, `RemoveGroupingPolicy()`). If a change would violate a constraint, the operation fails with an error and the policy is not updated.
+Constraints are enforced when grouping policies change (e.g. `AddGroupingPolicy()`, `RemoveGroupingPolicy()`)
+* If a change would violate a constraint, the operation fails with an error and the policy is not updated.
 
-When the model is loaded, all constraints are checked against current policies. Invalid constraints (bad syntax, missing RBAC setup, or current data that already violates a constraint) cause load to fail with a clear error.
+When the model is loaded, all constraints are checked against current policies
+* Invalid constraints (bad syntax, missing RBAC setup, or current data that already violates a constraint) cause load to fail with a clear error.
 
-## Matchers
+## `[matchers]`
 
-The `[matchers]` section defines how requests are evaluated against policy rules.
-
-```ini
-[matchers]
-m = r.sub == p.sub && r.obj == p.obj && r.act == p.act
-```
+* == how requests are evaluated -- against -- policy rules
 
 This matcher requires the request subject, object, and action to match the policy fields exactly.
 
@@ -169,7 +110,8 @@ Matchers support arithmetic (`+`, `-`, `*`, `/`) and logical (`&&`, `||`, `!`) o
 
 ### Expression order in matchers
 
-The order of expressions in a matcher can significantly affect performance. Example:
+The order of expressions in a matcher can significantly affect performance
+* Example:
 
 ```go
 const rbac_models = `
@@ -256,7 +198,8 @@ FAIL    github.com/casbin/casbin/v3     6.244s
 FAIL
 ```
 
-Put cheaper conditions first and expensive ones (e.g. role lookups) later. Reordering the matcher in the example above to:
+Put cheaper conditions first and expensive ones (e.g. role lookups) later
+* Reordering the matcher in the example above to:
 
 ```ini
 [matchers]
@@ -278,9 +221,11 @@ ok      github.com/casbin/casbin/v3     0.053s
 
 ## Multiple section types
 
-You can define multiple request, policy, effect, or matcher sections with suffixes like `r2`, `p2`, `e2`, `m2`. They pair by suffix: `r2` is matched with `p2` via `m2` and combined with `e2`.
+You can define multiple request, policy, effect, or matcher sections with suffixes like `r2`, `p2`, `e2`, `m2`
+* They pair by suffix: `r2` is matched with `p2` via `m2` and combined with `e2`.
 
-To use a non-default set, pass an `EnforceContext` as the first argument to `enforce`. Structure:
+To use a non-default set, pass an `EnforceContext` as the first argument to `enforce`
+* Structure:
 
 ```mdx-code-block
 <Tabs groupId="langs">
@@ -404,7 +349,9 @@ e.enforce(enforceContext, new AbacAPIUnitTest.TestEvalRule("alice", 30), "/data1
 
 ## Special grammar: `in` operator
 
-The `in` operator checks whether the right-hand array contains the left-hand value (using `==` equality, no type coercion). The left side can be any value; the right side must be an array of the same type. In Go, arrays must be `[]interface{}`.
+The `in` operator checks whether the right-hand array contains the left-hand value (using `==` equality, no type coercion)
+* The left side can be any value; the right side must be an array of the same type
+* In Go, arrays must be `[]interface{}`.
 
 Reference examples: [rbac_model_matcher_using_in_op](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/rbac_model_matcher_using_in_op.conf), [keyget2_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget2_model.conf), and [keyget_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget_model.conf).
 
@@ -424,7 +371,10 @@ e.Enforce(Sub{Name: "alice"}, Obj{Name: "a book", Admins: []interface{}{"alice",
 
 ## Expression evaluators
 
-Matchers are evaluated by a language-specific expression engine. Casbin uses these to provide a unified PERM syntax. Some engines support extra features beyond the documented syntax; those features may not be available in other languages. Use only documented syntax if you need cross-language compatibility.
+Matchers are evaluated by a language-specific expression engine
+* Casbin uses these to provide a unified PERM syntax
+* Some engines support extra features beyond the documented syntax; those features may not be available in other languages
+* Use only documented syntax if you need cross-language compatibility.
 
 Expression evaluators by implementation:
 
@@ -441,5 +391,6 @@ Expression evaluators by implementation:
 | casbin-cpp     | C++      | [https://github.com/ArashPartow/exprtk](https://github.com/ArashPartow/exprtk)                                                                                                                           |
 
 :::note
-If enforcement is slow, the expression evaluator is often the bottleneck. See the [Benchmarks](/docs/benchmark) page and consider reporting issues to the Casbin or evaluator project.
+If enforcement is slow, the expression evaluator is often the bottleneck
+* See the [Benchmarks](/docs/benchmark) page and consider reporting issues to the Casbin or evaluator project.
 :::
