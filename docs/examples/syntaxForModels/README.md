@@ -2,7 +2,11 @@ TODO:
 
 # | ANY model CONF file, 
 ## `[request_definition], [policy_definition], [policy_effect], [matchers]`
-
+* [basicSectionsPerEachConfFile.conf](basicSectionsPerEachConfFile.conf)
+### if you use **RBAC** -> add `[role_definition]` section
+* [rbac_model.conf](rbac_model.conf)
+### if you use **RBAC with constraints** -> add `[constraint_definition]` section
+* [rbac_with_constraints_model.conf](rbac_with_constraints_model.conf)
 
 ## `[request_definition]`
 * [modelWithRequestDefinition.conf](modelWithRequestDefinition.conf) 

@@ -15,16 +15,15 @@ authors: [nodece]
   * == combine [supported models](SupportedModels.md)
     * _Example:_ RBAC roles + ABAC attributes 
 
-### Request
+### Request -- `r` --
 
 * == access request's parameters
 
 * basic request
   * == 💡**subject** (who is requesting) + **object** (the resource) + **action** (the operation)💡
     * ⚠️EXACTLY this order ⚠️
-    * _Example:_ `r = sub, obj, act`
 
-### Policy
+### Policy -- `p` --
 
 * == access rules' shape
   * == field names + order
@@ -32,11 +31,8 @@ authors: [nodece]
       * the effect field | policy file, is ignored
       * matching policies -- are treated as -- "allow"
         * == by default, "allow"
-  * _Examples:_  
-    * `p = sub, obj, act`
-    * `p = sub, obj, act, eft`
 
-### Matcher
+### Matcher -- `m` --
 
 * == how to match a request -- against -- policies
   * _Example:_ `m = r.sub == p.sub && r.act == p.act && r.obj == p.obj`
@@ -49,7 +45,7 @@ authors: [nodece]
         * requirements
           * \>=1 element
 
-### Effect
+### Effect -- `e` --
 
 * == ALL matched policies' effects + logical expression
   * _Examples:_ 

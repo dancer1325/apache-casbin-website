@@ -1,0 +1,13 @@
+var
+  casbin: ICasbin;
+begin
+  casbin := TCasbin.Create('path/to/model.conf', 'path/to/policy.csv');
+  ...
+end
+
+
+// check permissions
+if casbin.enforce(['alice,data1,read']) then
+  // Alice is super happy as she can read data1
+else
+  // Alice is sad

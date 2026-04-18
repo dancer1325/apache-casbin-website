@@ -1,0 +1,29 @@
+use casbin::prelude::*;
+
+// If you use async_td as async executor
+#[cfg(feature = "runtime-async-std")]
+#[async_std::main]
+async fn main() -> Result<()> {
+    let mut e = Enforcer::new("path/to/model.conf", "path/to/policy.csv").await?;
+    Ok(())
+}
+
+// If you use tokio as async executor
+#[cfg(feature = "runtime-tokio")]
+#[tokio::main]
+async fn main() -> Result<()> {
+    let mut e = Enforcer::new("path/to/model.conf", "path/to/policy.csv").await?;
+    Ok(())
+}
+
+// check permissions
+  let sub = "alice"; // the user that wants to access a resource.
+  let obj = "data1"; // the resource that is going to be accessed.
+  let act = "read"; // the operation that the user performs on the resource.
+
+  if e.enforce((sub, obj, act)).await? {
+      // permit alice to read data1
+  } else {
+      // error occurs
+  }
+
