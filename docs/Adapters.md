@@ -6,6 +6,7 @@ keywords: [adapters, MySQL adapter, storage adapter]
 authors: [hsluoyz]
 ---
 
+TODO: 
 Casbin loads and saves policy through **adapters**. The enforcer calls `LoadPolicy()` to load rules and, when supported, `SavePolicy()` to persist them. Adapters are implemented in separate packages to keep the core library small.
 
 ## Supported adapters

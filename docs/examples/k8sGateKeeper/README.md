@@ -1,0 +1,1 @@
+deny deployments / use images -- with a -- specific tag

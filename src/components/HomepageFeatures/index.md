@@ -33,3 +33,16 @@
 # Cross-languages & cross-platforms
 
 * [here](../LanguageIntegration/index.md)
+
+# Role Managers
+
+* handles RBAC role hierarchy
+  * == user-role mappings
+* load role data -- from --
+  * Apache Casbin policy rules, OR
+  * external sources
+    * _Examples:_ LDAP, Okta, Auth0 , Azure AD
+* separated -- from the -- MAIN library
+  * ⚠️EXCEPT FOR: default role manager⚠️
+  * Reason: 🧠keep the library lightweight🧠
+* [AVAILABLE ones](/docs/RoleManagers.md)
