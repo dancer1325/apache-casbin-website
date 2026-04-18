@@ -12,103 +12,55 @@ authors: [nodece]
     * -- based on the -- ⭐️ **PERM metamodel (Policy, Effect, Request, Matchers)** ⭐️
 
 * custom models
-  * == combine components
+  * == combine [supported models](SupportedModels.md)
     * _Example:_ RBAC roles + ABAC attributes 
 
 ### Request
 
-The request definition specifies the parameters of an access request. A basic request is a tuple of three elements: **subject** (who is requesting), **object** (the resource), and **action** (the operation).
+* == access request's parameters
 
-Example:
-
-`r = sub, obj, act`
-
-This sets the parameter names and their order for the matching logic.
+* basic request
+  * == 💡**subject** (who is requesting) + **object** (the resource) + **action** (the operation)💡
+    * ⚠️EXACTLY this order ⚠️
+    * _Example:_ `r = sub, obj, act`
 
 ### Policy
 
-The policy definition describes the shape of your access rules: field names and order.
-
-Examples:
-
-`p = sub, obj, act` or `p = sub, obj, act, eft`
-
-When `eft` (policy effect) is omitted from the definition, the effect field in the policy file is ignored and matching policies are treated as "allow".
+* == access rules' shape
+  * == field names + order
+    * if `eft` (policy effect) is omitted -> 
+      * the effect field | policy file, is ignored
+      * matching policies -- are treated as -- "allow"
+        * == by default, "allow"
+  * _Examples:_  
+    * `p = sub, obj, act`
+    * `p = sub, obj, act, eft`
 
 ### Matcher
 
-The matcher defines how a request is matched against policies.
+* == how to match a request -- against -- policies
+  * _Example:_ `m = r.sub == p.sub && r.act == p.act && r.obj == p.obj`
+* if you want to split matchers ACROSS lines -> end EACH line -- with -- `\`
 
-Example: `m = r.sub == p.sub && r.act == p.act && r.obj == p.obj`
-
-When the request subject, object, and action match a policy’s fields, that policy’s effect (`p.eft`) is used. The effect is stored in `p.eft`.
+* operators
+  * ⚠️-- depend on -- Casbin language implementation⚠️ 
+    * | [Go implementation](https://github.com/casbin/govaluate),
+      * `in` operator
+        * requirements
+          * \>=1 element
 
 ### Effect
 
-The effect section combines the effects of all matched policies with a logical expression.
+* == ALL matched policies' effects + logical expression
+  * _Examples:_ 
+    * `e = some(where (p.eft == allow))`
+    * `e = some(where (p.eft == allow)) && !some(where (p.eft == deny))`
+      * allow the result ONLY if
+        * \>=1 policy, allows
+        * NO policy deny
+      * if allow & deny match -> deny wins
 
-Example: `e = some(where (p.eft == allow))`
-
-If any matched policy has effect "allow", the result is allow.
-
-Another example:
-
-`e = some(where (p.eft == allow)) && !some(where (p.eft == deny))`
-
-This means: the result is allow only if at least one policy allows and none deny. If both allow and deny match, deny wins.
-
-**ACL** is the simplest model in Casbin. Here is a minimal ACL model:
-
-```ini
-# Request definition
-[request_definition]
-r = sub, obj, act
-
-# Policy definition
-[policy_definition]
-p = sub, obj, act
-
-# Policy effect
-[policy_effect]
-e = some(where (p.eft == allow))
-
-# Matchers
-[matchers]
-m = r.sub == p.sub && r.obj == p.obj && r.act == p.act
-
-```
-
-Example policy for this model:
-
-```csv
-p, alice, data1, read
-p, bob, data2, write
-```
-
-So:
-
-- **alice** can read **data1**
-- **bob** can write **data2**
-
-You can split matchers across lines by ending each line with `\`:
-
-```ini
-# Matchers
-[matchers]
-m = r.sub == p.sub && r.obj == p.obj \
-  && r.act == p.act
-```
-
-The `in` operator is available in the **Go** implementation (not yet in jCasbin or Node-Casbin):
-
-```ini
-# Matchers
-[matchers]
-m = r.obj == p.obj && r.act == p.act || r.obj in ('data2', 'data3')
-```
-
-:::caution
-The array must have more than one element; otherwise the Go implementation may panic.
-:::
-
-For more operators, see [govaluate](https://github.com/casbin/govaluate).
+* effect
+  * requirements
+    * request subject + object + action / match a policy’s fields
+  * is stored | `p.eft`
