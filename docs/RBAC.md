@@ -9,7 +9,15 @@ authors: [hsluoyz]
 ## `[role_definition]`
 
 * `g = <USER>, <ROLE>`
-* == RBAC role (inheritance) relationships
+  * recommendations
+    * ❌NOT reuse ❌
+      * SAME name -- for -- user & role
+        * PROPOSAL: use prefix
+* == RBAC role relationships
+  * inheritance
+  * transitive
+    * == if A has role B & B has role C -> A has role C
+  * unbounded
 * MANDATORY
 * ALLOWED
   * 👀| same time, > 1 RBAC systems👀 
@@ -19,24 +27,24 @@ authors: [hsluoyz]
         * _Example:_ [here](https://github.com/casbin/casbin/blob/master/examples/rbac_model.conf)
       * 1 -- for -- resources
         * _Example:_ [here](https://github.com/casbin/casbin/blob/master/examples/rbac_with_resource_roles_model.conf)
-* stored | policy
+* allows
+  * if the request subject has the role | policy -> enable the request
+* allows
+  * store policy
+  * evaluates user–role (resource–role) mappings
+* ❌NOT validate❌
+  * users OR roles exist
+    * Reason:🧠that's part -- of the -- authentication🧠
 
 * Casbin 
   * treats ALL names -- as -- strings (user, resource, or role)
 
-So the request is allowed only if the request subject has the role given in the policy.
-
-:::note
-
-1. Casbin only stores and evaluates user–role (and resource–role) mappings; it does not validate that users or roles exist. That is the job of authentication.
-2. Do not reuse the same name for a user and a role (e.g. user `alice` and role `alice`), since Casbin cannot tell them apart. Use a prefix (e.g. `role_alice`) if needed.
-3. Role inheritance is transitive and unbounded: if A has role B and B has role C, then A effectively has role C.
-
-:::
-
+TODO: 
 :::info Token name convention
 The subject in the policy is usually named `sub` and listed first
-In Go Casbin you can use other names and order; then you must call `e.SetFieldIndex("p", constant.SubjectIndex, index)` after creating the enforcer so that APIs like `DeleteUser` use the correct column.
+In Go Casbin you can use other names and order; 
+then you must call `e.SetFieldIndex("p", constant.SubjectIndex, index)` after creating the enforcer 
+so that APIs like `DeleteUser` use the correct column.
 
 ```ini
 # `subject` here is for sub
@@ -49,28 +57,14 @@ e.SetFieldIndex("p", constant.SubjectIndex, 2) // index starts from 0
 ok, err := e.DeleteUser("alice") // without SetFieldIndex, it will raise an error
 ```
 
-:::
-
 ## Role hierarchy
 
-Casbin implements RBAC1-style role hierarchy: if `alice` has `role1` and `role1` has `role2`, then `alice` effectively has `role2` and its permissions.
+Casbin implements RBAC1-style role hierarchy: if `alice` has `role1` and `role1` has `role2`, 
+then `alice` effectively has `role2` and its permissions.
 
 The **hierarchy depth** is how many levels of inheritance you allow
 The default role manager uses a maximum depth of 10 (configurable),
 so a user can inherit up to 10 levels of roles.
-
-```go
-// NewRoleManager is the constructor for creating an instance of the
-// default RoleManager implementation.
-func NewRoleManager(maxHierarchyLevel int) rbac.RoleManager {
-    rm := RoleManager{}
-    rm.allRoles = &sync.Map{}
-    rm.maxHierarchyLevel = maxHierarchyLevel
-    rm.hasPattern = false
-
-    return &rm
-}
-```
 
 ## Distinguishing users from roles
 

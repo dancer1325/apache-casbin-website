@@ -6,6 +6,7 @@ keywords: [role manager, RBAC, Casbin]
 authors: [hsluoyz]
 ---
 
+TODO: 
 The **role manager** implements the RBAC role hierarchy (who has which role, and role inheritance). Casbin can use the default in-memory role manager (backed by policy) or plug in external sources (e.g. LDAP, Okta, Auth0, Azure AD). Custom role managers live in separate packages. List of available role managers by language:
 
 ```mdx-code-block
@@ -67,4 +68,4 @@ All role managers must implement the [RoleManager](https://github.com/casbin/pyc
 
 ## API
 
-See the [API](/docs/rolemanager-api) section for details.
+* [API](/docs/rolemanager-api) section for details.

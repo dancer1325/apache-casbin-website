@@ -54,5 +54,23 @@ TODO:
 ##### priority -- based on -- role
 TODO:
 
-## Constraint Definition
+## `[constraint_definition]`
 TODO:
+
+### 
+
+## `[matchers]`
+TODO:
+
+### expression order | matchers
+#### recommendations: place FIRST, cheaper matchers
+* expensive FIRST,
+  * | [expressionOrderInMatchers.go](expressionOrderInMatchers.go), use `rbac_models`
+  * `go test -run ^TestManyRoles$ github.com/casbin/casbin/v3 -v`
+    * take 6"
+* cheap FIRST,
+  * | [expressionOrderInMatchers.go](expressionOrderInMatchers.go), use `rbac_models_cheap_first`
+  * `go test -run ^TestManyRoles$ github.com/casbin/casbin/v3 -v`
+    * take << 1"
+
+## TODO:

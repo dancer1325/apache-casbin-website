@@ -1,0 +1,8 @@
+use casbin::prelude::*;
+
+// way1
+let mut e = Enforcer::new("examples/basic_model.conf", "examples/basic_policy.csv").await?;
+
+// way2
+let a = FileAdapter::new("examples/basic_policy.csv");
+let e = Enforcer::new("examples/basic_model.conf", a).await?;

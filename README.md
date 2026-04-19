@@ -6,18 +6,33 @@
 
 * Apache Casbin
   * == [Apache Software Foundation (ASF)](https://www.apache.org/)'s [incubation](https://incubator.apache.org/projects/casbin.html) project
-  * == ⭐️access control library⭐️ /
-    * open-source
-    * powerful
-    * efficient
-    * support
-      * 👀MULTIPLE authorization models👀
+  * == ⭐️access control (== authorization) library⭐️ /
+    * allow
+      * 👀enforce authorization -- based on -- [access control models](https://en.wikipedia.org/wiki/Computer_security_model)👀/
+        * support MULTIPLE authorization models
+        * manages 
+          * storage -- for the -- access control model & policies
+          * user–role & role–role relationships
+    * provide
+      * built-in 
+        * superusers
+        * operators
+    * is
+      * open-source
+      * powerful
+      * efficient
     * uses |
       * applications
       * AI gateway
       * MCP
       * clouds
       * web apps
+    * use cases
+      * applications / need controlled access -- to -- resources
+  * ❌NOT❌
+    * authenticate user
+    * maintain user OR role list OR password
+      * ⚠️EXCEPT TO:⚠️ RBAC
 
 ## documentation
 * [here](src/pages/index.md)

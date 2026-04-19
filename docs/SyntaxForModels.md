@@ -47,336 +47,116 @@ authors: [nodece]
 | `priority(p.eft) &#124;&#124; deny`                            | priority                                                                                                                     | [Priority](SupportedModels.md)                    |
 | `subjectPriority(p.eft)`                                       | priority -- based on -- role                                                                                                 | [Subject-Priority](SupportedModels.md)            |
 
-## Constraint Definition
+## `[constraint_definition]`
 
-The optional `[constraint_definition]` section defines invariants for RBAC (e.g
-* separation of duties)
-* Constraints are checked when role assignments change
-* You must have `[role_definition]` to use constraints.
-
-```ini
-[constraint_definition]
-c = sod("finance_requester", "finance_approver")
-c2 = sodMax(["payroll_view", "payroll_edit", "payroll_approve"], 1)
-c3 = roleMax("superadmin", 2)
-c4 = rolePre("db_admin", "security_trained")
-```
+* requirements
+  * `[role_definition]`
+* OPTIONAL
+* uses
+  * | RBAC, invariants
+    * _Example:_ separation of duties
+* | role assignments change,
+  * constraints are checked
 
 ### Constraint Types
 
-**Separation of Duties (sod)** — A user cannot hold both roles
-* If Alice has `finance_requester`, she cannot be assigned `finance_approver`.
+* **Separation of Duties -- `sod` --**
+  * == user can NOT hold both roles
+  * if Alice has `finance_requester`, she cannot be assigned `finance_approver`.
 
-```ini
-c = sod("finance_requester", "finance_approver")
-```
 
-**Separation of Duties Max (sodMax)** — Limits how many roles from a set a user can have
-* With `sodMax(..., 1)` for payroll roles, a user can have at most one of view, edit, or approve.
+* **Separation of Duties Max -- `sodMax` --**
+  * limits the NUMBER roles | set / user can have
 
-```ini
-c2 = sodMax(["payroll_view", "payroll_edit", "payroll_approve"], 1)
-```
+* **Role Cardinality -- `roleMax` --**
+  * limits the NUMBER of users / can have a role
 
-**Role Cardinality (roleMax)** — Caps how many users can have a role
-* For example, at most two users can have `superadmin`.
+* **Prerequisite Role -- `rolePre` --** 
+  * a role is REQUIRED BEFORE another
 
-```ini
-c3 = roleMax("superadmin", 2)
-```
+### how do constraints work?
 
-**Prerequisite Role (rolePre)** — One role is required before another
-* For example, a user must have `security_trained` before being assigned `db_admin`.
+* constrains are checked | 
+  * group policies change (e.g. `AddGroupingPolicy()`, `RemoveGroupingPolicy()`),
+    * == if a change would violate a constraint ->
+      * operation fails -- with an -- error
+      * policy is NOT updated
+  * load the model
+    * checked vs current policies
 
-```ini
-c4 = rolePre("db_admin", "security_trained")
-```
-
-### How Constraints Work
-
-Constraints are enforced when grouping policies change (e.g. `AddGroupingPolicy()`, `RemoveGroupingPolicy()`)
-* If a change would violate a constraint, the operation fails with an error and the policy is not updated.
-
-When the model is loaded, all constraints are checked against current policies
-* Invalid constraints (bad syntax, missing RBAC setup, or current data that already violates a constraint) cause load to fail with a clear error.
+* invalid constraints
+  * _Examples:_ bad syntax, missing RBAC setup, or current data / already violates a constraint
+  * throw a clear error
 
 ## `[matchers]`
 
-* == how requests are evaluated -- against -- policy rules
+* == how requests are evaluated -- vs -- policy rules
 
-This matcher requires the request subject, object, and action to match the policy fields exactly.
+* support
+  * arithmetic operators
+    * `+`, `-`, `*`, `/`
+  * logical operators
+    * `&&`, `||`, `!` 
 
-Matchers support arithmetic (`+`, `-`, `*`, `/`) and logical (`&&`, `||`, `!`) operators.
+### expression order | matchers
 
-### Expression order in matchers
+* affect
+  * performance
 
-The order of expressions in a matcher can significantly affect performance
-* Example:
+* recommendations
+  * place FIRST, cheaper matchers
 
-```go
-const rbac_models = `
-[request_definition]
-r = sub, obj, act
+## MULTIPLE section types
 
-[policy_definition]
-p = sub, obj, act
+* == define MULTIPLE 
+  * [request](#request_definition), 
+  * [policy](#policy_definition),
+  * [effect](#policy_effect),
+  * [matcher](#matchers)
 
-[role_definition]
-g = _, _
+* add suffixes
+  * _Examples:_
+    * `r2`
+      * == request definition 2
+    * `p2`
+      * == policy definition 2
+    * `e2`
+      * == policy effect 2
+    * `m2`
+      * == matcher 2
+  * are paired -- by -- suffix
+    * _Example:_ `r2` is matched -- , via `m2`, with -- `p2` + combined -- with -- `e2`
 
-[policy_effect]
-e = some(where (p.eft == allow))
+* how to use them?
+  * set an `EnforceContext`
+  * `.enforce(previouslyDefinedEnforceContext)`
 
-[matchers]
-m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
-`
+* _Examples:_
+  * [model](https://github.com/casbin/casbin/blob/master/examples/multiple_policy_definitions_model.conf) 
+  * [policy](https://github.com/casbin/casbin/blob/master/examples/multiple_policy_definitions_policy.csv)
 
-func TestManyRoles(t *testing.T) {
+## `in` operator
 
-    m, _ := model.NewModelFromString(rbac_models)
-    e, _ := NewEnforcer(m, false)
+* allows
+  * checks whether the right-hand `[]someType` contains the left-hand value `someType`
+    * | Go,
+      * right-hand MUST be `[]interface{}` 
 
-    roles := []string{"admin", "manager", "developer", "tester"}
+* vs `==`
+  * NO type coercion
 
-    // 2500 projects
-    for nbPrj := 1; nbPrj < 2500; nbPrj++ {
-        // 4 objects and 1 role per object (so 4 roles)
-        for _, role := range roles {
-            roleDB := fmt.Sprintf("%s_project:%d", role, nbPrj)
-            objectDB := fmt.Sprintf("/projects/%d", nbPrj)
-            e.AddPolicy(roleDB, objectDB, "GET")
-        }
-        jasmineRole := fmt.Sprintf("%s_project:%d", roles[1], nbPrj)
-        e.AddGroupingPolicy("jasmine", jasmineRole)
-    }
+* _Examples:_
+  * [rbac_model_matcher_using_in_op](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/rbac_model_matcher_using_in_op.conf)
+  * [keyget2_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget2_model.conf)
+  * [keyget_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget_model.conf)
 
-    e.AddGroupingPolicy("abu", "manager_project:1")
-    e.AddGroupingPolicy("abu", "manager_project:2499")
+## Expression evaluators OR expression engine
 
-    // With same number of policies
-    // User 'abu' has only two roles
-    // User 'jasmine' has many roles (1 role per policy, here 2500 roles)
+* provide 
+  * a unified PERM syntax
+  * extra features / EACH engine
 
-    request := func(subject, object, action string) {
-        t0 := time.Now()
-        resp, _ := e.Enforce(subject, object, action)
-        tElapse := time.Since(t0)
-        t.Logf("RESPONSE %-10s %s\t %s : %5v IN: %+v", subject, object, action, resp, tElapse)
-        if tElapse > time.Millisecond*100 {
-            t.Errorf("More than 100 milliseconds for %s %s %s : %+v", subject, object, action, tElapse)
-        }
-    }
-
-    request("abu", "/projects/1", "GET")        // really fast because only 2 roles in all policies and at the beginning of the casbin_rule table
-    request("abu", "/projects/2499", "GET")     // fast because only 2 roles in all policies
-    request("jasmine", "/projects/1", "GET")    // really fast at the beginning of the casbin_rule table
-
-    request("jasmine", "/projects/2499", "GET") // slow and fails the only 1st time   <<<< pb here
-    request("jasmine", "/projects/2499", "GET") // fast maybe due to internal cache mechanism
-
-    // same issue with non-existing roles
-    // request("jasmine", "/projects/999999", "GET") // slow fails the only 1st time   <<<< pb here
-    // request("jasmine", "/projects/999999", "GET") // fast maybe due to internal cache mechanism
-}
-```
-
-Enforcement duration can reach 6 seconds.
-
-```bash
-go test -run ^TestManyRoles$ github.com/casbin/casbin/v3 -v
-
-=== RUN   TestManyRoles
-    rbac_api_test.go:598: RESPONSE abu        /projects/1        GET :  true IN: 438.379µs
-    rbac_api_test.go:598: RESPONSE abu        /projects/2499     GET :  true IN: 39.005173ms
-    rbac_api_test.go:598: RESPONSE jasmine    /projects/1        GET :  true IN: 1.774319ms
-    rbac_api_test.go:598: RESPONSE jasmine    /projects/2499     GET :  true IN: 6.164071648s
-    rbac_api_test.go:600: More than 100 milliseconds for jasmine /projects/2499 GET : 6.164071648s
-    rbac_api_test.go:598: RESPONSE jasmine    /projects/2499     GET :  true IN: 12.164122ms
---- FAIL: TestManyRoles (6.24s)
-FAIL
-FAIL    github.com/casbin/casbin/v3     6.244s
-FAIL
-```
-
-Put cheaper conditions first and expensive ones (e.g. role lookups) later
-* Reordering the matcher in the example above to:
-
-```ini
-[matchers]
-m = r.obj == p.obj && g(r.sub, p.sub) && r.act == p.act
-```
-
-```bash
-go test -run ^TestManyRoles$ github.com/casbin/casbin/v3 -v
-=== RUN   TestManyRoles
-    rbac_api_test.go:599: RESPONSE abu        /projects/1        GET :  true IN: 786.635µs
-    rbac_api_test.go:599: RESPONSE abu        /projects/2499     GET :  true IN: 4.933064ms
-    rbac_api_test.go:599: RESPONSE jasmine    /projects/1        GET :  true IN: 2.908534ms
-    rbac_api_test.go:599: RESPONSE jasmine    /projects/2499     GET :  true IN: 7.292963ms
-    rbac_api_test.go:599: RESPONSE jasmine    /projects/2499     GET :  true IN: 6.168307ms
---- PASS: TestManyRoles (0.05s)
-PASS
-ok      github.com/casbin/casbin/v3     0.053s
-```
-
-## Multiple section types
-
-You can define multiple request, policy, effect, or matcher sections with suffixes like `r2`, `p2`, `e2`, `m2`
-* They pair by suffix: `r2` is matched with `p2` via `m2` and combined with `e2`.
-
-To use a non-default set, pass an `EnforceContext` as the first argument to `enforce`
-* Structure:
-
-```mdx-code-block
-<Tabs groupId="langs">
-<TabItem value="Go" label="Go" default>
-```
-
-```go
-EnforceContext{"r2","p2","e2","m2"}
-type EnforceContext struct {
-    RType string
-    PType string
-    EType string
-    MType string
-}
-```
-
-```mdx-code-block
-</TabItem>
-<TabItem value="Node.js" label="Node.js">
-```
-
-```javascript
-const enforceContext = new EnforceContext('r2', 'p2', 'e2', 'm2');
-class EnforceContext {
-  constructor(rType, pType, eType, mType) {
-    this.pType = pType;
-    this.eType = eType;
-    this.mType = mType;
-    this.rType = rType;
-  }
-}
-```
-
-```mdx-code-block
-</TabItem>
-<TabItem value="Java" label="Java">
-```
-
-```java
-EnforceContext enforceContext = new EnforceContext("2");
-public class EnforceContext {
-    private String pType;
-    private String eType;
-    private String mType;
-    private String rType;
-    public EnforceContext(String suffix) {
-      this.pType = "p" + suffix;
-      this.eType = "e" + suffix;
-      this.mType = "m" + suffix;
-      this.rType = "r" + suffix;
-    }
-}
-```
-
-```mdx-code-block
-</TabItem>
-</Tabs>
-```
-
-Example usage (see the [model](https://github.com/casbin/casbin/blob/master/examples/multiple_policy_definitions_model.conf) and [policy](https://github.com/casbin/casbin/blob/master/examples/multiple_policy_definitions_policy.csv) examples):
-
-```mdx-code-block
-<Tabs groupId="langs">
-<TabItem value="Go" label="Go" default>
-```
-
-```go
-// Pass in a suffix as a parameter to NewEnforceContext, such as 2 or 3, and it will create r2, p2, etc.
-enforceContext := NewEnforceContext("2")
-// You can also specify a certain type individually
-enforceContext.EType = "e"
-// Don't pass in EnforceContext; the default is r, p, e, m
-e.Enforce("alice", "data2", "read")        // true
-// Pass in EnforceContext
-e.Enforce(enforceContext, struct{ Age int }{Age: 70}, "/data1", "read")        //false
-e.Enforce(enforceContext, struct{ Age int }{Age: 30}, "/data1", "read")        //true
-```
-
-```mdx-code-block
-</TabItem>
-<TabItem value="Node.js" label="Node.js">
-```
-
-```javascript
-// Pass in a suffix as a parameter to NewEnforceContext, such as 2 or 3, and it will create r2, p2, etc.
-const enforceContext = new NewEnforceContext('2');
-
-// You can also specify a certain type individually
-enforceContext.eType = "e"
-
-// Don't pass in EnforceContext; the default is r, p, e, m
-e.Enforce("alice", "data2", "read")        // true
-
-// Pass in EnforceContext
-e.Enforce(enforceContext, {Age: 70}, "/data1", "read")        //false
-e.Enforce(enforceContext, {Age: 30}, "/data1", "read")        //true
-```
-
-```mdx-code-block
-</TabItem>
-<TabItem value="Java" label="Java">
-```
-
-```java
-// Pass in a suffix as a parameter to NewEnforceContext, such as 2 or 3, and it will create r2, p2, etc.
-EnforceContext enforceContext = new EnforceContext("2");
-// You can also specify a certain type individually
-enforceContext.seteType("e");
-// Don't pass in EnforceContext; the default is r, p, e, m
-e.enforce("alice", "data2", "read");  // true
-// Pass in EnforceContext
-// TestEvalRule is located in https://github.com/casbin/jcasbin/blob/master/src/test/java/org/casbin/jcasbin/main/AbacAPIUnitTest.java#L56
-e.enforce(enforceContext, new AbacAPIUnitTest.TestEvalRule("alice", 70), "/data1", "read"); // false
-e.enforce(enforceContext, new AbacAPIUnitTest.TestEvalRule("alice", 30), "/data1", "read"); // true
-```
-
-```mdx-code-block
-</TabItem>
-</Tabs>
-```
-
-## Special grammar: `in` operator
-
-The `in` operator checks whether the right-hand array contains the left-hand value (using `==` equality, no type coercion)
-* The left side can be any value; the right side must be an array of the same type
-* In Go, arrays must be `[]interface{}`.
-
-Reference examples: [rbac_model_matcher_using_in_op](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/rbac_model_matcher_using_in_op.conf), [keyget2_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget2_model.conf), and [keyget_model](https://github.com/casbin/casbin/blob/277c1a2b85698272f764d71a94d2595a8d425915/examples/keyget_model.conf).
-
-Example:
-
-```ini
-[request_definition]
-r = sub, obj
-...
-[matchers]
-m = r.sub.Name in (r.obj.Admins)
-```
-
-```go
-e.Enforce(Sub{Name: "alice"}, Obj{Name: "a book", Admins: []interface{}{"alice", "bob"}})
-```
-
-## Expression evaluators
-
-Matchers are evaluated by a language-specific expression engine
-* Casbin uses these to provide a unified PERM syntax
-* Some engines support extra features beyond the documented syntax; those features may not be available in other languages
-* Use only documented syntax if you need cross-language compatibility.
-
-Expression evaluators by implementation:
+* language-specific
 
 | Implementation | Language | Expression Evaluator                                                                                                                                                                                     |
 |----------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -390,7 +170,7 @@ Expression evaluators by implementation:
 | casbin-rs      | Rust     | [https://github.com/jonathandturner/rhai](https://github.com/jonathandturner/rhai)                                                                                                                       |
 | casbin-cpp     | C++      | [https://github.com/ArashPartow/exprtk](https://github.com/ArashPartow/exprtk)                                                                                                                           |
 
-:::note
-If enforcement is slow, the expression evaluator is often the bottleneck
-* See the [Benchmarks](/docs/benchmark) page and consider reporting issues to the Casbin or evaluator project.
-:::
+* impact
+  * enforcement speed
+
+* [Benchmarks](Benchmark.md)

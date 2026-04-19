@@ -6,9 +6,9 @@ e, err := casbin.NewEnforcer("path/to/model.conf", "path/to/policy.csv")
 
 
 // check permissions
-sub := "alice" // the user that wants to access a resource.
-obj := "data1" // the resource that is going to be accessed.
-act := "read" // the operation that the user performs on the resource.
+sub := "alice" 	// user / wants to access a resource
+obj := "data1" // resource / is going to be accessed
+act := "read" // operation / user performs | resource
 
 ok, err := e.Enforce(sub, obj, act)
 

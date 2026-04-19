@@ -6,14 +6,15 @@ keywords: [PERM, request, policy, matcher, effect]
 authors: [nodece]
 ---
 
-* access control
-  * == how users & resources interact
-  * expressed -- as -- CONF files /
-    * -- based on the -- ⭐️ **PERM metamodel (Policy, Effect, Request, Matchers)** ⭐️
-
-* custom models
-  * == combine [supported models](SupportedModels.md)
-    * _Example:_ RBAC roles + ABAC attributes 
+* | Casbin,
+  * access control
+    * == how users & resources interact
+    * ⭐️expressed -- as -- ".conf" files⭐️ /
+      * -- based on the -- 👀**PERM metamodel (Policy, Effect, Request, Matchers)** 👀
+    * [supported models](SupportedModels.md)
+    * custom models
+      * == combine [supported models](SupportedModels.md)
+        * _Example:_ RBAC roles + ABAC attributes 
 
 ### Request -- `r` --
 
