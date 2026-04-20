@@ -40,6 +40,7 @@ authors: [hsluoyz]
   * treats ALL names -- as -- strings (user, resource, or role)
 
 TODO: 
+
 :::info Token name convention
 The subject in the policy is usually named `sub` and listed first
 In Go Casbin you can use other names and order; 
@@ -59,19 +60,30 @@ ok, err := e.DeleteUser("alice") // without SetFieldIndex, it will raise an erro
 
 ## Role hierarchy
 
-Casbin implements RBAC1-style role hierarchy: if `alice` has `role1` and `role1` has `role2`, 
-then `alice` effectively has `role2` and its permissions.
+* == [RBAC1-style](CasbinRBACAndRBAC96.md) role hierarchy
+  * _Example:_ if `alice` has `role1` & `role1` has `role2` -> `alice` has `role2` + its permissions
 
-The **hierarchy depth** is how many levels of inheritance you allow
-The default role manager uses a maximum depth of 10 (configurable),
-so a user can inherit up to 10 levels of roles.
+* **hierarchy depth** 
+  * == levels of inheritance / you allow
+  * _Example:_ [role manager](#role-manager)'s default hierarchy depth = 10
 
-## Distinguishing users from roles
+## Distinguishing users -- from -- roles
 
-In Casbin, users and roles are both strings
-* In flat RBAC (no role hierarchy), `GetAllSubjects()` and `GetAllRoles()` return the left and right sides of `g` rules (often users and roles)
-* With a hierarchy, the same name can appear as both user and role; if your app does not track which is which, use a naming convention (e.g
-* prefix `role::`) and check it when interpreting results.
+* users == string & roles == string
+
+* | flat RBAC
+  * == [NO role hierarchy](#role-hierarchy)
+  * `GetAllSubjects()`
+    * 's return: `g` rules' left side
+  * `GetAllRoles()`
+    * 's return: `g` rules' right side
+
+* | role hierarchy, 
+  * SAME name can appear | user & role; -> recommended steps
+    * 👀use a naming convention 👀
+      * _Example:_ prefix `role::`
+    * | interpret results,
+      * check it 
 
 ## Implicit roles and permissions
 
